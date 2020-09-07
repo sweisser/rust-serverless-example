@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use chrono::NaiveDate;
 use chrono::Duration;
 use serde_derive::Serialize;
@@ -63,27 +62,6 @@ fn add_days(date: NaiveDate, offset: i64) -> NaiveDate {
 
 fn year_in_range(year: i32) -> bool {
     year >= 1583 && year <= 8202
-}
-
-#[derive(Eq, PartialEq, Hash)]
-pub enum HolidayNames {
-    NewYearsDay,
-    Epiphany,
-    WomensDay,
-    GoodFriday,
-    EasterMonday,
-    LabourDay,
-    AscensionDay,
-    WhitMonday,
-    CorpusChristi,
-    AssumptionDay,
-    WorldChildrensDay,
-    GermanUnityDay,
-    ReformationDay,
-    AllSaintsDay,
-    RepentanceAndPrayersDay,
-    ChristmasDay,
-    BoxingDay
 }
 
 #[derive(Serialize)]
