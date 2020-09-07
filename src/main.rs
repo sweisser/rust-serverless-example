@@ -3,9 +3,42 @@ use lambda_http::{lambda, Request, IntoResponse, RequestExt};
 use serde_derive::{Serialize, Deserialize};
 use serde_json::json;
 use rust_serverless_example::{ compute_holidays, Holidays };
+use std::fmt;
+
+fn main() {
+    lambda!(handler)
+}
+
+fn handler(
+    request: Request,
+    _ctx: Context
+) -> Result<impl IntoResponse, HandlerError> {
+    match request.payload::<MyRequest>() {
+        Ok(req) => {
+            match req {
+                Some(req_ok) => {
+                    if req_ok.year
+                    // All parsing went okay.
+                    let r = MyResponse {
+                        version: String::from("1.0"),
+                        holidays: compute_holidays(req_ok.year),
+                    };
+
+                    Ok(json!(r))
+                },
+                None => {
+                    Err(HandlerError::new(MyError::new("Error deserializing the request. Maybe some fields missing?")))
+                }
+            }
+        },
+        Err(e) => {
+            Err(HandlerError::new(MyError::new("Error parsing the request (must be POST with Content-Type: application/json).")))
+        }
+    }
+}
 
 #[derive(Debug, Deserialize, Default)]
-struct Args {
+struct MyRequest {
     #[serde(default)]
     year: i32,
 }
@@ -16,21 +49,37 @@ struct MyResponse {
     holidays: Holidays,
 }
 
-fn main() {
-    lambda!(handler)
+// Define our error types. These may be customized for our error handling cases.
+// Now we will be able to write our own errors, defer to an underlying error
+// implementation, or do something in between.
+#[derive(Serialize, Debug, Clone)]
+struct MyError {
+    errormessage: String,
 }
 
-fn handler(
-    request: Request,
-    _ctx: Context
-) -> Result<impl IntoResponse, HandlerError> {
-    let args: Args = request.payload()
-        .unwrap_or_else(|_parse_err| None)
-        .unwrap_or_default();
-    let r = MyResponse {
-        version: String::from("1.0"),
-        holidays: compute_holidays(args.year),
-    };
+impl MyError {
+    pub fn new(msg: &str) -> MyError {
+        MyError {
+            errormessage: String::from(msg)
+        }
+    }
+}
 
-    Ok(json!(r))
+// Generation of an error is completely separate from how it is displayed.
+// There's no need to be concerned about cluttering complex logic with the display style.
+//
+// Note that we don't store any extra info about the errors. This means we can't state
+// which string failed to parse without modifying our types to carry that information.
+impl fmt::Display for MyError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.errormessage)
+    }
+}
+
+impl std::error::Error for MyError {}
+
+impl lambda_runtime::error::LambdaErrorExt for MyError {
+    fn error_type(&self) -> &str {
+        "MyError"
+    }
 }

@@ -5,12 +5,6 @@ use serde_derive::Serialize;
 
 pub fn compute_holidays(year: i32) -> Holidays {
     let easter = easter_sunday(year);
-    let mut hash = HashMap::new();
-    hash.insert(HolidayNames::NewYearsDay, NaiveDate::from_ymd(year, 1, 1));
-    hash.insert(HolidayNames::Epiphany, NaiveDate::from_ymd(year, 1, 6));
-    hash.insert(HolidayNames::WomensDay, NaiveDate::from_ymd(year, 3, 8));
-    hash.insert(HolidayNames::GoodFriday, add_days(easter, -2));
-    hash.insert(HolidayNames::EasterMonday, add_days(easter, 1));
 
     Holidays {
         new_years_day: NaiveDate::from_ymd(year, 1, 1),
@@ -19,12 +13,15 @@ pub fn compute_holidays(year: i32) -> Holidays {
         good_friday: add_days(easter, -2),
         easter_sunday: easter,
         easter_monday: add_days(easter, 1),
+        mardi_gras: add_days(easter, -47),
+        ash_wednesday: add_days(easter, -46),
+        ascension_day: add_days(easter, 39),
     }
 }
 
 // See https://en.wikipedia.org/wiki/Computus
 fn compute_m_and_n(year: i32) -> (i32, i32) {
-    assert!(year >= 1583 && year <= 8202);
+    assert!(year_in_range(year));
     let k = year / 100;
     let q = year / 400;
     let p = (13 + 8 * k) / 25;
@@ -35,7 +32,7 @@ fn compute_m_and_n(year: i32) -> (i32, i32) {
 }
 
 pub fn easter_sunday(year: i32) -> NaiveDate {
-    assert!(year >= 1583 && year <= 8202);
+    assert!(year_in_range(year));
 
     let (m, n) = compute_m_and_n(year);
 
@@ -62,6 +59,10 @@ pub fn easter_sunday(year: i32) -> NaiveDate {
 
 fn add_days(date: NaiveDate, offset: i64) -> NaiveDate {
     date + Duration::days(offset)
+}
+
+fn year_in_range(year: i32) -> bool {
+    year >= 1583 && year <= 8202
 }
 
 #[derive(Eq, PartialEq, Hash)]
@@ -93,6 +94,9 @@ pub struct Holidays {
     good_friday: NaiveDate,
     easter_sunday: NaiveDate,
     easter_monday: NaiveDate,
+    mardi_gras: NaiveDate,    // Faschingsdienstag
+    ash_wednesday: NaiveDate,
+    ascension_day: NaiveDate, // Christi Himmelfahrt
 }
 
 
